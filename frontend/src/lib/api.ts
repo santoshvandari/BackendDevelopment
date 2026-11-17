@@ -11,17 +11,37 @@ const BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
 ).replace(/\/+$/, '')
 
+const TOKEN_KEY = 'auth_token'
+
+export const tokenStorage = {
+  get: (): string | null => {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem(TOKEN_KEY)
+  },
+  set: (token: string): void => {
+    localStorage.setItem(TOKEN_KEY, token)
+  },
+  clear: (): void => {
+    localStorage.removeItem(TOKEN_KEY)
+  },
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers || {})
+
   if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
+  }
+
+  const token = tokenStorage.get()
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
   }
 
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
   const res = await fetch(`${BASE_URL}${cleanEndpoint}`, {
     ...options,
     headers,
-    credentials: 'include',
   })
 
   if (!res.ok) {
@@ -50,17 +70,17 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
-  async login(formData: FormData): Promise<{ message: string }> {
-    return request<{ message: string }>('/auth/token', {
+  async login(formData: FormData): Promise<{ access_token: string; token_type: string }> {
+    const result = await request<{ access_token: string; token_type: string }>('/auth/token', {
       method: 'POST',
       body: formData,
     })
+    tokenStorage.set(result.access_token)
+    return result
   },
 
-  async logout(): Promise<{ message: string }> {
-    return request<{ message: string }>('/auth/logout', {
-      method: 'POST',
-    })
+  async logout(): Promise<void> {
+    tokenStorage.clear()
   },
 
   async getMe(): Promise<User> {

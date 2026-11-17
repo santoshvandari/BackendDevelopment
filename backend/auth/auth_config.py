@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated, Optional
 
 import jwt
-from fastapi import Cookie, Depends, HTTPException, Request, Response, status
+from fastapi import Depends, HTTPException, Request, status
 from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
 
@@ -12,9 +12,6 @@ from schema.user import TokenData, User, UserInDB
 password_hash = PasswordHash.recommended()
 DUMMY_HASH = password_hash.hash("dummypassword")
 
-COOKIE_NAME = "access_token"
-
-# Single admin user loaded directly from .env
 fake_users_db = {
     settings.ADMIN_USERNAME: {
         "username": settings.ADMIN_USERNAME,
@@ -36,8 +33,7 @@ def get_password_hash(password: str) -> str:
 
 def get_user(db: dict, username: str) -> Optional[UserInDB]:
     if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
+        return UserInDB(**db[username])
     return None
 
 
@@ -53,59 +49,25 @@ def authenticate_user(fake_db: dict, username: str, password: str):
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(UTC) + expires_delta
-    else:
-        expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(UTC) + (
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def set_auth_cookie(response: Response, token: str) -> None:
-    max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-    samesite = "none" if settings.COOKIE_SECURE else "lax"
-    response.set_cookie(
-        key=COOKIE_NAME,
-        value=token,
-        httponly=True,
-        max_age=max_age,
-        expires=max_age,
-        samesite=samesite,
-        secure=settings.COOKIE_SECURE,
-    )
-
-
-def clear_auth_cookie(response: Response) -> None:
-    samesite = "none" if settings.COOKIE_SECURE else "lax"
-    response.delete_cookie(
-        key=COOKIE_NAME,
-        httponly=True,
-        samesite=samesite,
-        secure=settings.COOKIE_SECURE,
-    )
-
-
-async def get_current_user(
-    request: Request,
-    access_token: Annotated[Optional[str], Cookie()] = None,
-) -> User:
+async def get_current_user(request: Request) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # 1. First look in HttpOnly Cookie
-    token = access_token
-
-    # 2. Optional fallback to Authorization: Bearer <token> header (e.g. for API clients/docs)
-    if not token:
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         raise credentials_exception
+
+    token = auth_header.split(" ", 1)[1]
 
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])

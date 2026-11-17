@@ -10,8 +10,8 @@ export const Navbar: React.FC = () => {
   const { user, logout } = useAuth()
   const router = useRouter()
 
-  const handleLogout = async () => {
-    await logout()
+  const handleLogout = () => {
+    logout()
     router.push('/')
   }
 

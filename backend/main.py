@@ -1,5 +1,6 @@
-from contextlib import asynccontextmanager
 import sys
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -28,16 +29,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Register routers
 app.include_router(auth_router, prefix="/api")
 app.include_router(survey_router, prefix="/api")
 

@@ -5,11 +5,8 @@ from .auth_config import (
     get_user,
     authenticate_user,
     create_access_token,
-    set_auth_cookie,
-    clear_auth_cookie,
     get_current_user,
     get_current_active_user,
-    COOKIE_NAME,
 )
 
 __all__ = [
@@ -19,9 +16,6 @@ __all__ = [
     "get_user",
     "authenticate_user",
     "create_access_token",
-    "set_auth_cookie",
-    "clear_auth_cookie",
     "get_current_user",
     "get_current_active_user",
-    "COOKIE_NAME",
 ]
