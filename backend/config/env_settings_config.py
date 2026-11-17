@@ -41,6 +41,8 @@ class Settings:
         self.ADMIN_FULL_NAME: str = get_optional_env("ADMIN_FULL_NAME", "")
         self.ADMIN_EMAIL: str = get_optional_env("ADMIN_EMAIL", "")
 
+        self.COOKIE_SECURE: bool = get_optional_env("COOKIE_SECURE", "false").lower() == "true"
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]

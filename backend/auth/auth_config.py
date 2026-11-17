@@ -63,26 +63,26 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def set_auth_cookie(response: Response, token: str) -> None:
-    """Sets the JWT as a secure, HTTP-only cookie."""
     max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    samesite = "none" if settings.COOKIE_SECURE else "lax"
     response.set_cookie(
         key=COOKIE_NAME,
         value=token,
         httponly=True,
         max_age=max_age,
         expires=max_age,
-        samesite="lax",
-        secure=False,  # Set to True in production with HTTPS
+        samesite=samesite,
+        secure=settings.COOKIE_SECURE,
     )
 
 
 def clear_auth_cookie(response: Response) -> None:
-    """Clears the HTTP-only auth cookie."""
+    samesite = "none" if settings.COOKIE_SECURE else "lax"
     response.delete_cookie(
         key=COOKIE_NAME,
         httponly=True,
-        samesite="lax",
-        secure=False,
+        samesite=samesite,
+        secure=settings.COOKIE_SECURE,
     )
 
 
