@@ -1,42 +1,42 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { useAuth } from '@/context/AuthContext'
-import { Lock, User, AlertCircle, ArrowLeft } from 'lucide-react'
+import React, {useState} from "react";
+import {useRouter} from "next/navigation";
+import Link from "next/link";
+import {useAuth} from "@/context/AuthContext";
+import {Lock, User, AlertCircle, ArrowLeft} from "lucide-react";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const { login } = useAuth()
-  const router = useRouter()
+  const {login} = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setSubmitting(true)
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
 
     try {
-      const formData = new FormData()
-      formData.append('username', username)
-      formData.append('password', password)
-      await login(formData)
-      router.push('/')
-      router.refresh()
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("password", password);
+      await login(formData);
+      router.push("/");
+      router.refresh();
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message)
+        setError(err.message);
       } else {
-        setError('Login failed. Please check your credentials.')
+        setError("Login failed. Please check your credentials.");
       }
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center p-4">
@@ -48,7 +48,9 @@ export default function LoginPage() {
           >
             <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Back to Surveys
           </Link>
-          <h1 className="text-xl font-bold text-gray-900">Admin Authentication</h1>
+          <h1 className="text-xl font-bold text-gray-900">
+            Admin Authentication
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
             Sign in to create, edit surveys and view analytics.
           </p>
@@ -75,7 +77,7 @@ export default function LoginPage() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. admin"
+                placeholder="Enter username"
                 className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
               />
             </div>
@@ -105,16 +107,10 @@ export default function LoginPage() {
             disabled={submitting}
             className="w-full mt-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded transition-colors disabled:opacity-50 cursor-pointer"
           >
-            {submitting ? 'Authenticating...' : 'Sign In'}
+            {submitting ? "Authenticating..." : "Sign In"}
           </button>
         </form>
-
-        <div className="mt-6 pt-4 border-t border-gray-100 text-xs text-gray-500">
-          <p>
-            Default credentials configured in backend: <code className="bg-gray-100 px-1 py-0.5 rounded text-gray-800">admin / admin</code>
-          </p>
-        </div>
       </div>
     </div>
-  )
+  );
 }

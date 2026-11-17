@@ -38,8 +38,8 @@ class Settings:
         # Single Admin User settings (passed individually via .env)
         self.ADMIN_USERNAME: str = get_required_env("ADMIN_USERNAME")
         self.ADMIN_HASHED_PASSWORD: str = get_required_env("ADMIN_HASHED_PASSWORD")
-        self.ADMIN_FULL_NAME: str = get_optional_env("ADMIN_FULL_NAME", "Administrator")
-        self.ADMIN_EMAIL: str = get_optional_env("ADMIN_EMAIL", "admin@example.com")
+        self.ADMIN_FULL_NAME: str = get_optional_env("ADMIN_FULL_NAME", "")
+        self.ADMIN_EMAIL: str = get_optional_env("ADMIN_EMAIL", "")
 
     @property
     def cors_origins_list(self) -> list[str]:

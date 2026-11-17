@@ -24,10 +24,9 @@ uvicorn main:app --reload --port 8000
 
 ## Authentication
 
-Uses a single admin defined via `.env` with **HttpOnly** cookies.
+Uses a single admin account defined strictly via environment variables with **HttpOnly** cookies.
 
-- **Default login**: `admin` / `admin`
-- **Generate new hash**:
+- Generate password hash for `.env`:
   ```bash
   python -c "from pwdlib import PasswordHash; print(PasswordHash.recommended().hash('YOUR_PASSWORD'))"
   ```
