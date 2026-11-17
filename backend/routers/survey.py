@@ -146,8 +146,9 @@ def update_survey(
     if payload.questions is not None:
         for old_q in list(survey.questions):
             session.delete(old_q)
+        session.commit()
+        session.refresh(survey)
 
-        new_questions: List[Question] = []
         for q_data in payload.questions:
             options = [
                 QuestionOption(
@@ -157,17 +158,16 @@ def update_survey(
                 )
                 for opt in (q_data.options or [])
             ]
-            new_questions.append(
-                Question(
-                    text=q_data.text,
-                    question_type=q_data.question_type,
-                    is_required=q_data.is_required,
-                    order=q_data.order,
-                    conditional_logic=q_data.conditional_logic,
-                    options=options,
-                )
+            new_q = Question(
+                survey_id=survey.id,
+                text=q_data.text,
+                question_type=q_data.question_type,
+                is_required=q_data.is_required,
+                order=q_data.order,
+                conditional_logic=q_data.conditional_logic,
+                options=options,
             )
-        survey.questions = new_questions
+            session.add(new_q)
 
     session.add(survey)
     session.commit()
@@ -204,8 +204,24 @@ def submit_response(
             status_code=status.HTTP_404_NOT_FOUND, detail="Survey not found"
         )
 
+    sorted_questions = sorted(survey.questions, key=lambda q: q.order)
     submitted_question_ids = {a.question_id: a.value for a in payload.answers}
-    for question in survey.questions:
+
+    for idx, question in enumerate(sorted_questions):
+        if question.conditional_logic:
+            dep_idx = question.conditional_logic.get("depends_on_question_index")
+            trig_val = question.conditional_logic.get("trigger_value")
+            if dep_idx is not None and trig_val is not None and 0 <= dep_idx < len(sorted_questions):
+                parent_q = sorted_questions[dep_idx]
+                parent_val = submitted_question_ids.get(parent_q.id)
+                if parent_val is None:
+                    continue
+                if isinstance(parent_val, list):
+                    if trig_val not in parent_val:
+                        continue
+                elif str(parent_val).strip().lower() != str(trig_val).strip().lower():
+                    continue
+
         if question.is_required:
             val = submitted_question_ids.get(question.id)
             if val is None or val == "" or val == []:
