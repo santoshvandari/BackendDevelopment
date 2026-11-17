@@ -1,2 +1,8 @@
 *.pdf
-frontend/
+.env
+.env.local
+node_modules/
+.next/
+dist/
+__pycache__/
+venv/
